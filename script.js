@@ -129,9 +129,9 @@ const allProductsJSON = [
   },
 ];
 
-const cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
-
 const productDisplay = document.querySelector(".product-grid");
+
+// console.log(allProductsJSON);
 
 allProductsJSON.forEach((product) => {
   // Create a new product card for each product
@@ -153,12 +153,13 @@ const products = document.querySelectorAll(".product-card");
 
 products.forEach((product) => {
   product.addEventListener("click", function (e) {
-    product.classList.toggle("selected");
+    // product.classList.toggle("selected");
+    const cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+
     const productId = parseInt(product.dataset.id, 10);
     if (cartItems) {
       const existingItem = cartItems.find((item) => item.id === productId);
       if (existingItem) {
-        // const newCartItems = cartItems.filter((prod) => prod.id !== productId);
         const newCartItems = cartItems.map((prod) =>
           prod.id === productId
             ? { ...prod, quantity: prod.quantity + 1 }
@@ -235,4 +236,32 @@ document.addEventListener("DOMContentLoaded", function () {
   //         }
   //     }
   // });
+});
+
+const cartItemsList = document.querySelector(".modal-content .cart-items");
+// console.log(cartItemsList);
+
+const cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+
+cartItems.forEach((item) => {
+  const cartItem = ` <li>
+            <img
+              src=${item.image}
+              alt="image"
+            />
+
+            <div class="details">
+              <h3>${item.name}</h3>
+              <p>Rs. ${item.price}</p>
+
+              <div class="quantity">
+                <button class="minus">-</button>
+                <input type="number" value=${item.quantity} />
+                <button class="plus">+</button>
+              </div>
+              <p>Rs. 448</p>
+            </div>
+          </li>`;
+
+  cartItemsList.innerHTML += cartItem;
 });
