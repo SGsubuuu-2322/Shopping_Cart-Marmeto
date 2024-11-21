@@ -1,3 +1,4 @@
+// Product JSON
 const allProductsJSON = [
   {
     id: 1,
@@ -129,10 +130,25 @@ const allProductsJSON = [
   },
 ];
 
+// Initialization and Declarations...
+const cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
 const productDisplay = document.querySelector(".product-grid");
+const cartNumDisplay = document.querySelector("#shopLink span");
+let cartNum = cartItems.length;
+cartNumDisplay.innerText = cartNum;
 
-// console.log(allProductsJSON);
+// Utility functions to increment and decrement of cart-quantity...
+function cartIncrement() {
+  cartNum++;
+  cartNumDisplay.innerText = cartNum;
+}
 
+function cartDecrement() {
+  cartNum--;
+  cartNumDisplay.innerText = cartNum;
+}
+
+// Function to render all the products from Product JSON...
 allProductsJSON.forEach((product) => {
   // Create a new product card for each product
   const productCard = `
@@ -149,36 +165,36 @@ allProductsJSON.forEach((product) => {
   productDisplay.innerHTML += productCard;
 });
 
+// Function to add selected class to the cart items when refreshed page...
 const products = document.querySelectorAll(".product-card");
+products.forEach((prod) => {
+  if (cartItems.map((item) => item.id).includes(+prod.dataset.id)) {
+    prod.classList.add("selected");
+  }
+});
 
+// Function to add and delete product from the cart and localstorage...
 products.forEach((product) => {
   product.addEventListener("click", function (e) {
-    // product.classList.toggle("selected");
+    product.classList.toggle("selected");
     const cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
 
     const productId = parseInt(product.dataset.id, 10);
-    if (cartItems) {
-      const existingItem = cartItems.find((item) => item.id === productId);
-      if (existingItem) {
-        const newCartItems = cartItems.map((prod) =>
-          prod.id === productId
-            ? { ...prod, quantity: prod.quantity + 1 }
-            : prod
-        );
-        localStorage.setItem("cartItems", JSON.stringify(newCartItems));
-      } else {
-        const prod = allProductsJSON.find((pro) => pro.id == productId);
-        cartItems.push({ ...prod, quantity: 1 });
-        localStorage.setItem("cartItems", JSON.stringify(cartItems));
-      }
+    const existingItem = cartItems.find((item) => item.id === productId);
+    if (existingItem) {
+      const newCartItems = cartItems.filter((prod) => prod.id !== productId);
+      localStorage.setItem("cartItems", JSON.stringify(newCartItems));
+      cartDecrement();
     } else {
       const prod = allProductsJSON.find((pro) => pro.id == productId);
       cartItems.push({ ...prod, quantity: 1 });
       localStorage.setItem("cartItems", JSON.stringify(cartItems));
+      cartIncrement();
     }
   });
 });
 
+// Function to add cart-modal functionality to our page...
 document.addEventListener("DOMContentLoaded", function () {
   var modal = document.getElementById("shopModal");
   var shopLink = document.getElementById("shopLink");
@@ -189,12 +205,69 @@ document.addEventListener("DOMContentLoaded", function () {
     modal.style.display = "block";
     document.body.style.overflow = "hidden";
     closeBtn.focus();
+
+    let cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
+    const cartItemsListCont = document.querySelector(
+      ".modal-content .cart-items"
+    );
+    cartItems.forEach((item) => {
+      // console.log(item);
+      const cartItem = ` <li>
+            <img
+              src=${item?.image}
+              alt="image"
+            />
+
+            <div class="details" data-id=${item?.id}>
+              <h3>${(item?.name).split("").slice(0, 12).join("")}...</h3>
+              <p>Rs. ${item?.price}</p>
+
+              <div class="quantity">
+                <button class="minus">-</button>
+                <input type="number" value=${item?.quantity} />
+                <button class="plus">+</button>
+              </div>
+              <p>Rs. ${item?.quantity * item?.price}</p>
+              <span class="delete">❌</span>
+            </div>
+          </li>`;
+
+      cartItemsListCont.innerHTML += cartItem;
+    });
+
+    const cartItemsList = document.querySelectorAll(
+      ".modal-content .cart-items li"
+    );
+    cartItemsList.forEach((item) => {
+      item.addEventListener("click", (e) => {
+        if (e.target.classList[0] == "delete") {
+          const id = e.target.parentNode.dataset.id;
+          const newCartItems = cartItems.filter((item) => item.id !== +id);
+          // console.log(newCartItems);
+          localStorage.setItem("cartItems", JSON.stringify(newCartItems));
+          item.remove();
+
+          const products = document.querySelectorAll(".product-card");
+          products.forEach((prod) => {
+            if (+prod.dataset.id === +id) {
+              // console.log(prod.classList);
+              prod.classList.remove("selected");
+              cartDecrement();
+            }
+          });
+        }
+      });
+    });
   }
 
   function closeModal() {
     modal.style.display = "none";
     document.body.style.overflow = "auto";
     shopLink.focus();
+    const cartItemsListCont = document.querySelector(
+      ".modal-content .cart-items"
+    );
+    cartItemsListCont.innerHTML = "";
   }
 
   shopLink.onclick = function (e) {
@@ -205,63 +278,43 @@ document.addEventListener("DOMContentLoaded", function () {
   closeBtn.onclick = closeModal;
   //   exploreBtn.onclick = closeModal;
 
-  //   window.onclick = function (event) {
-  //     if (event.target == modal) {
-  //       closeModal();
-  //     }
-  //   };
+  window.onclick = function (event) {
+    if (event.target == modal) {
+      closeModal();
+    }
+  };
 
   document.onkeydown = function (event) {
     if (event.key === "Escape" && modal.style.display === "block") {
       closeModal();
     }
   };
-
-  // modal.addEventListener('keydown', function(e) {
-  //     if (e.key === 'Tab') {
-  //         var focusableElements = modal.querySelectorAll('a[href], button, textarea, input[type="text"], input[type="radio"], input[type="checkbox"], select');
-  //         var firstElement = focusableElements[0];
-  //         var lastElement = focusableElements[focusableElements.length - 1];
-
-  //         if (e.shiftKey) {
-  //             if (document.activeElement === firstElement) {
-  //                 lastElement.focus();
-  //                 e.preventDefault();
-  //             }
-  //         } else {
-  //             if (document.activeElement === lastElement) {
-  //                 firstElement.focus();
-  //                 e.preventDefault();
-  //             }
-  //         }
-  //     }
-  // });
 });
 
-const cartItemsList = document.querySelector(".modal-content .cart-items");
-// console.log(cartItemsList);
+// products.forEach((product) => {
+//   product.addEventListener("click", function (e) {
+//     product.classList.toggle("selected");
+//     const cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
 
-const cartItems = JSON.parse(localStorage.getItem("cartItems")) || [];
-
-cartItems.forEach((item) => {
-  const cartItem = ` <li>
-            <img
-              src=${item.image}
-              alt="image"
-            />
-
-            <div class="details">
-              <h3>${item.name}</h3>
-              <p>Rs. ${item.price}</p>
-
-              <div class="quantity">
-                <button class="minus">-</button>
-                <input type="number" value=${item.quantity} />
-                <button class="plus">+</button>
-              </div>
-              <p>Rs. 448</p>
-            </div>
-          </li>`;
-
-  cartItemsList.innerHTML += cartItem;
-});
+//     const productId = parseInt(product.dataset.id, 10);
+//     if (cartItems) {
+//       const existingItem = cartItems.find((item) => item.id === productId);
+//       if (existingItem) {
+//         const newCartItems = cartItems.map((prod) =>
+//           prod.id === productId
+//             ? { ...prod, quantity: prod.quantity + 1 }
+//             : prod
+//         );
+//         localStorage.setItem("cartItems", JSON.stringify(newCartItems));
+//       } else {
+//         const prod = allProductsJSON.find((pro) => pro.id == productId);
+//         cartItems.push({ ...prod, quantity: 1 });
+//         localStorage.setItem("cartItems", JSON.stringify(cartItems));
+//       }
+//     } else {
+//       const prod = allProductsJSON.find((pro) => pro.id == productId);
+//       cartItems.push({ ...prod, quantity: 1 });
+//       localStorage.setItem("cartItems", JSON.stringify(cartItems));
+//     }
+//   });
+// });
